@@ -1,0 +1,1393 @@
+```html
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Postcard Maker</title>
+
+    <!-- Библиотека для сохранения открытки как PNG -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #f8e8ff, #e8f3ff);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* HEADER */
+
+        header {
+            background: white;
+            padding: 18px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 27px;
+            font-weight: bold;
+            color: #8b5cf6;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #555;
+            margin-left: 25px;
+            font-weight: bold;
+        }
+
+        nav a:hover {
+            color: #8b5cf6;
+        }
+
+        /* MAIN */
+
+        .container {
+            width: 95%;
+            max-width: 1400px;
+            margin: 30px auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #5b21b6;
+        }
+
+        .workspace {
+            display: grid;
+            grid-template-columns: 230px 1fr 300px;
+            gap: 25px;
+            align-items: start;
+        }
+
+        /* TEMPLATES */
+
+        .templates {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .templates h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #5b21b6;
+        }
+
+        .template {
+            margin-bottom: 15px;
+            cursor: pointer;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 3px solid transparent;
+            transition: 0.3s;
+        }
+
+        .template:hover {
+            transform: scale(1.03);
+        }
+
+        .template.active {
+            border-color: #8b5cf6;
+        }
+
+        .template img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .template p {
+            background: white;
+            padding: 8px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* POSTCARD */
+
+        .card-area {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 650px;
+        }
+
+        .postcard {
+            width: 650px;
+            height: 450px;
+            max-width: 100%;
+            border-radius: 25px;
+            position: relative;
+            overflow: hidden;
+
+            background-image: url("https://www.publicdomainpictures.net/pictures/320000/velka/floral-birthday-card-greeting.jpg");
+
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+
+            transition: background-image 0.4s ease;
+        }
+
+        /* ЗАТЕМНЕНИЕ ФОТО */
+
+        .postcard::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.18);
+            z-index: 1;
+        }
+
+        /* TEXT */
+
+        .card-text {
+            position: absolute;
+            z-index: 5;
+            color: white;
+            text-shadow: 2px 2px 6px black;
+            cursor: text;
+            outline: none;
+            min-width: 100px;
+        }
+
+        #mainText {
+            top: 150px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            text-align: center;
+            font-size: 42px;
+            font-weight: bold;
+        }
+
+        #subText {
+            top: 230px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            text-align: center;
+            font-size: 22px;
+        }
+
+        /* EDITOR */
+
+        .editor {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .editor h2 {
+            color: #5b21b6;
+            margin-bottom: 15px;
+        }
+
+        .editor h3 {
+            margin-bottom: 10px;
+        }
+
+        .editor-section {
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            resize: vertical;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        textarea:focus {
+            border-color: #8b5cf6;
+        }
+
+        input[type="range"] {
+            width: 100%;
+        }
+
+        input[type="color"] {
+            width: 60px;
+            height: 40px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            border: none;
+            padding: 10px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            background: #eee;
+            transition: 0.3s;
+            font-weight: bold;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            background: #ddd;
+        }
+
+        .main-button {
+            width: 100%;
+            background: #8b5cf6;
+            color: white;
+            margin-top: 10px;
+        }
+
+        .main-button:hover {
+            background: #7044d8;
+        }
+
+        /* READY TEXT */
+
+        .ready-text {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .ready-text button {
+            text-align: left;
+            background: #f5f1ff;
+        }
+
+        .ready-text button:hover {
+            background: #e9ddff;
+        }
+
+        /* UPLOAD PHOTO */
+
+        .upload-photo {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f1ff;
+            border-radius: 15px;
+        }
+
+        .upload-photo h3 {
+            margin-bottom: 12px;
+            font-size: 17px;
+        }
+
+        #photoInput {
+            display: none;
+        }
+
+        .upload-button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            text-align: center;
+            background: #8b5cf6;
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .upload-button:hover {
+            background: #7044d8;
+            transform: translateY(-2px);
+        }
+
+        /* FOOTER */
+
+        footer {
+            margin-top: 40px;
+            background: white;
+            padding: 25px;
+            text-align: center;
+            color: #777;
+        }
+
+        /* ADAPTIVE */
+
+        @media (max-width: 1100px) {
+
+            .workspace {
+                grid-template-columns: 200px 1fr;
+            }
+
+            .editor {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 750px) {
+
+            header {
+                padding: 15px;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            nav a {
+                margin: 0 7px;
+            }
+
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+
+            .templates {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .templates h2 {
+                grid-column: 1 / -1;
+            }
+
+            .template {
+                margin-bottom: 0;
+            }
+
+            .postcard {
+                height: 350px;
+            }
+
+            #mainText {
+                font-size: 30px;
+                top: 110px;
+            }
+
+            #subText {
+                font-size: 18px;
+                top: 190px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- HEADER -->
+
+    <header>
+
+        <div class="logo">
+            💌 Postcard Maker
+        </div>
+
+        <nav>
+            <a href="#">Главная</a>
+            <a href="#">Шаблоны</a>
+            <a href="#">О проекте</a>
+        </nav>
+
+    </header>
+
+
+    <div class="container">
+
+        <h1>
+            ✨ Создай свою открытку
+        </h1>
+
+
+        <div class="workspace">
+
+            <!-- ШАБЛОНЫ -->
+
+            <div class="templates">
+
+                <h2>
+                    🎨 Шаблоны
+                </h2>
+
+
+                <div
+                    class="template active"
+                    onclick="changeTemplate('birthday', this)">
+
+                    <img
+                        src="https://www.publicdomainpictures.net/pictures/320000/velka/floral-birthday-card-greeting.jpg">
+
+                    <p>
+                        🎂 День рождения
+                    </p>
+
+                </div>
+
+
+                <div
+                    class="template"
+                    onclick="changeTemplate('love', this)">
+
+                    <img
+                        src="https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&w=800&q=80">
+
+                    <p>
+                        ❤️ Любовь
+                    </p>
+
+                </div>
+
+
+                <div
+                    class="template"
+                    onclick="changeTemplate('newyear', this)">
+
+                    <img
+                        src="https://images.unsplash.com/photo-1482517967863-00e15c9b44be?auto=format&fit=crop&w=800&q=80">
+
+                    <p>
+                        🎄 Новый год
+                    </p>
+
+                </div>
+
+
+                <div
+                    class="template"
+                    onclick="changeTemplate('march8', this)">
+
+                    <img
+                        src="https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=800&q=80">
+
+                    <p>
+                        🌸 8 Марта
+                    </p>
+
+                </div>
+
+
+                <div
+                    class="template"
+                    onclick="changeTemplate('wedding', this)">
+
+                    <img
+                        src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=800&q=80">
+
+                    <p>
+                        💍 Свадьба
+                    </p>
+
+                </div>
+
+
+                <div
+                    class="template"
+                    onclick="changeTemplate('friend', this)">
+
+                    <img
+                        src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=800&q=80">
+
+                    <p>
+                        👭 Друг
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- ОТКРЫТКА -->
+
+            <div class="card-area">
+
+                <div
+                    class="postcard"
+                    id="postcard">
+
+                    <div
+                        class="card-text"
+                        id="mainText"
+                        contenteditable="true"
+                        onclick="selectText('mainText')">
+
+                        С Днём рождения! 🎂
+
+                    </div>
+
+
+                    <div
+                        class="card-text"
+                        id="subText"
+                        contenteditable="true"
+                        onclick="selectText('subText')">
+
+                        Желаю счастья, любви и исполнения всех желаний! ❤️
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- РЕДАКТОР -->
+
+            <div class="editor">
+
+                <h2>
+                    ✏️ Редактор
+                </h2>
+
+
+                <!-- ТЕКСТ -->
+
+                <div class="editor-section">
+
+                    <h3>
+                        📝 Текст
+                    </h3>
+
+                    <textarea
+                        id="textInput"
+                        placeholder="Введите текст..."></textarea>
+
+
+                    <button
+                        class="main-button"
+                        onclick="changeText()">
+
+                        Изменить текст
+
+                    </button>
+
+                </div>
+
+
+                <!-- РАЗМЕР -->
+
+                <div class="editor-section">
+
+                    <h3>
+                        🔤 Размер текста
+                    </h3>
+
+                    <input
+                        type="range"
+                        id="fontSize"
+                        min="14"
+                        max="70"
+                        value="42"
+                        oninput="changeFontSize()">
+
+                </div>
+
+
+                <!-- ЦВЕТ -->
+
+                <div class="editor-section">
+
+                    <h3>
+                        🎨 Цвет текста
+                    </h3>
+
+                    <input
+                        type="color"
+                        id="textColor"
+                        value="#ffffff"
+                        onchange="changeColor()">
+
+                </div>
+
+
+                <!-- ВЫРАВНИВАНИЕ -->
+
+                <div class="editor-section">
+
+                    <h3>
+                        ↔️ Выравнивание
+                    </h3>
+
+
+                    <div class="buttons">
+
+                        <button onclick="alignText('left')">
+                            ◀ Слева
+                        </button>
+
+                        <button onclick="alignText('center')">
+                            ⬌ Центр
+                        </button>
+
+                        <button onclick="alignText('right')">
+                            Справа ▶
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ГОТОВЫЕ ТЕКСТЫ -->
+
+                <div class="editor-section">
+
+                    <h3>
+                        💬 Готовые тексты
+                    </h3>
+
+
+                    <div class="ready-text">
+
+                        <button
+                            onclick="setText('Желаю счастья, здоровья и исполнения всех желаний! ❤️')">
+
+                            ❤️ Поздравление
+
+                        </button>
+
+
+                        <button
+                            onclick="setText('Пусть каждый день будет наполнен радостью и улыбками! 😊')">
+
+                            😊 Пожелание
+
+                        </button>
+
+
+                        <button
+                            onclick="setText('Ты самый замечательный человек! Спасибо, что ты есть! 💕')">
+
+                            💕 Для близкого человека
+
+                        </button>
+
+
+                        <button
+                            onclick="setText('Пусть все мечты обязательно сбудутся! ✨')">
+
+                            ✨ Для мечтателя
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ДОБАВИТЬ / УДАЛИТЬ -->
+
+                <div class="editor-section">
+
+                    <div class="buttons">
+
+                        <button onclick="addText()">
+
+                            ➕ Добавить текст
+
+                        </button>
+
+
+                        <button onclick="deleteText()">
+
+                            🗑️ Удалить
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- СОБСТВЕННАЯ ФОТОГРАФИЯ -->
+
+                <div class="upload-photo">
+
+                    <h3>
+                        📷 Своя фотография
+                    </h3>
+
+
+                    <label
+                        for="photoInput"
+                        class="upload-button">
+
+                        🖼️ Выбрать фотографию
+
+                    </label>
+
+
+                    <input
+                        type="file"
+                        id="photoInput"
+                        accept="image/*"
+                        onchange="uploadPhoto()">
+
+
+                    <button
+                        class="main-button"
+                        onclick="removePhoto()">
+
+                        🔄 Вернуть шаблон
+
+                    </button>
+
+                </div>
+
+
+                <!-- СКАЧИВАНИЕ -->
+
+                <button
+                    class="main-button"
+                    onclick="downloadCard()">
+
+                    💾 Скачать открытку
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- FOOTER -->
+
+    <footer>
+
+        <p>
+            💌 Postcard Maker — создай красивую открытку своими руками
+        </p>
+
+        <p>
+            © 2026 Все права защищены
+        </p>
+
+    </footer>
+
+
+    <script>
+
+        /* ========================================
+           ВЫБРАННЫЙ ТЕКСТ
+        ======================================== */
+
+        let selectedText = "mainText";
+
+
+        /* ========================================
+           ТЕКУЩИЙ ШАБЛОН
+        ======================================== */
+
+        let currentTemplate = "birthday";
+
+
+        /* ========================================
+           ВЫБОР ТЕКСТА
+        ======================================== */
+
+        function selectText(id) {
+
+            selectedText = id;
+
+            let element =
+                document.getElementById(id);
+
+
+            document.getElementById("textInput").value =
+                element.innerText.trim();
+
+
+            document.getElementById("fontSize").value =
+                parseInt(
+                    getComputedStyle(element).fontSize
+                );
+
+
+            document.getElementById("textColor").value =
+                rgbToHex(
+                    getComputedStyle(element).color
+                );
+
+        }
+
+
+        /* ========================================
+           RGB → HEX
+        ======================================== */
+
+        function rgbToHex(rgb) {
+
+            let result =
+                rgb.match(/\d+/g);
+
+
+            if (!result) {
+
+                return "#ffffff";
+
+            }
+
+
+            return "#" +
+                result
+                    .slice(0, 3)
+                    .map(function(x) {
+
+                        return (
+                            "0" +
+                            parseInt(x).toString(16)
+                        ).slice(-2);
+
+                    })
+                    .join("");
+
+        }
+
+
+        /* ========================================
+           ИЗМЕНИТЬ ТЕКСТ
+        ======================================== */
+
+        function changeText() {
+
+            let text =
+                document.getElementById("textInput").value;
+
+
+            document.getElementById(selectedText)
+                .innerText = text;
+
+        }
+
+
+        /* ========================================
+           РАЗМЕР ТЕКСТА
+        ======================================== */
+
+        function changeFontSize() {
+
+            let size =
+                document.getElementById("fontSize").value;
+
+
+            document.getElementById(selectedText)
+                .style.fontSize =
+                size + "px";
+
+        }
+
+
+        /* ========================================
+           ЦВЕТ ТЕКСТА
+        ======================================== */
+
+        function changeColor() {
+
+            let color =
+                document.getElementById("textColor").value;
+
+
+            document.getElementById(selectedText)
+                .style.color = color;
+
+        }
+
+
+        /* ========================================
+           ВЫРАВНИВАНИЕ
+        ======================================== */
+
+        function alignText(position) {
+
+            document.getElementById(selectedText)
+                .style.textAlign = position;
+
+        }
+
+
+        /* ========================================
+           ГОТОВЫЙ ТЕКСТ
+        ======================================== */
+
+        function setText(text) {
+
+            document.getElementById(selectedText)
+                .innerText = text;
+
+
+            document.getElementById("textInput")
+                .value = text;
+
+        }
+
+
+        /* ========================================
+           ДОБАВИТЬ ТЕКСТ
+        ======================================== */
+
+        function addText() {
+
+            let postcard =
+                document.getElementById("postcard");
+
+
+            let newText =
+                document.createElement("div");
+
+
+            newText.className =
+                "card-text";
+
+
+            newText.contentEditable = true;
+
+
+            newText.innerText =
+                "Новый текст ✨";
+
+
+            newText.style.top =
+                "300px";
+
+
+            newText.style.left =
+                "50%";
+
+
+            newText.style.transform =
+                "translateX(-50%)";
+
+
+            newText.style.width =
+                "80%";
+
+
+            newText.style.textAlign =
+                "center";
+
+
+            newText.style.fontSize =
+                "25px";
+
+
+            newText.id =
+                "text" + Date.now();
+
+
+            newText.onclick =
+                function() {
+
+                    selectedText =
+                        this.id;
+
+
+                    document.getElementById("textInput")
+                        .value =
+                        this.innerText;
+
+                };
+
+
+            postcard.appendChild(newText);
+
+
+            selectText(newText.id);
+
+        }
+
+
+        /* ========================================
+           УДАЛИТЬ ТЕКСТ
+        ======================================== */
+
+        function deleteText() {
+
+            let element =
+                document.getElementById(selectedText);
+
+
+            if (
+                element &&
+                selectedText !== "mainText" &&
+                selectedText !== "subText"
+            ) {
+
+                element.remove();
+
+
+                selectedText =
+                    "mainText";
+
+
+                selectText("mainText");
+
+            } else {
+
+                alert(
+                    "Основной текст удалить нельзя."
+                );
+
+            }
+
+        }
+
+
+        /* ========================================
+           ШАБЛОНЫ
+        ======================================== */
+
+        function changeTemplate(type, element) {
+
+            currentTemplate = type;
+
+
+            let postcard =
+                document.getElementById("postcard");
+
+
+            let templates = {
+
+                birthday:
+                    "https://www.publicdomainpictures.net/pictures/320000/velka/floral-birthday-card-greeting.jpg",
+
+                love:
+                    "https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&w=1200&q=80",
+
+                newyear:
+                    "https://images.unsplash.com/photo-1482517967863-00e15c9b44be?auto=format&fit=crop&w=1200&q=80",
+
+                march8:
+                    "https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1200&q=80",
+
+                wedding:
+                    "https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1200&q=80",
+
+                friend:
+                    "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&q=80"
+
+            };
+
+
+            postcard.style.backgroundImage =
+                "url('" +
+                templates[type] +
+                "')";
+
+
+            postcard.style.backgroundSize =
+                "cover";
+
+
+            postcard.style.backgroundPosition =
+                "center";
+
+
+            /* УБИРАЕМ ACTIVE */
+
+            document
+                .querySelectorAll(".template")
+                .forEach(function(item) {
+
+                    item.classList.remove("active");
+
+                });
+
+
+            /* ДОБАВЛЯЕМ ACTIVE */
+
+            element.classList.add("active");
+
+
+            /* ТЕКСТЫ */
+
+            let main =
+                document.getElementById("mainText");
+
+
+            let sub =
+                document.getElementById("subText");
+
+
+            if (type === "birthday") {
+
+                main.innerText =
+                    "С Днём рождения! 🎂";
+
+                sub.innerText =
+                    "Желаю счастья, любви и исполнения всех желаний! ❤️";
+
+            }
+
+
+            if (type === "love") {
+
+                main.innerText =
+                    "Я люблю тебя ❤️";
+
+                sub.innerText =
+                    "Ты делаешь мой мир прекраснее!";
+
+            }
+
+
+            if (type === "newyear") {
+
+                main.innerText =
+                    "С Новым годом! 🎄";
+
+                sub.innerText =
+                    "Пусть новый год принесёт счастье и радость! ✨";
+
+            }
+
+
+            if (type === "march8") {
+
+                main.innerText =
+                    "С 8 Марта! 🌸";
+
+                sub.innerText =
+                    "Желаю красоты, счастья и весеннего настроения! 💐";
+
+            }
+
+
+            if (type === "wedding") {
+
+                main.innerText =
+                    "С днём свадьбы! 💍";
+
+                sub.innerText =
+                    "Пусть ваша любовь будет вечной! ❤️";
+
+            }
+
+
+            if (type === "friend") {
+
+                main.innerText =
+                    "Для лучшего друга! 👭";
+
+                sub.innerText =
+                    "Спасибо, что всегда рядом! 💕";
+
+            }
+
+        }
+
+
+        /* ========================================
+           ЗАГРУЗКА СВОЕЙ ФОТОГРАФИИ
+        ======================================== */
+
+        function uploadPhoto() {
+
+            let fileInput =
+                document.getElementById("photoInput");
+
+
+            let file =
+                fileInput.files[0];
+
+
+            if (!file) {
+
+                return;
+
+            }
+
+
+            /* ПРОВЕРКА ФАЙЛА */
+
+            if (!file.type.startsWith("image/")) {
+
+                alert(
+                    "Пожалуйста, выберите изображение."
+                );
+
+                return;
+
+            }
+
+
+            let reader =
+                new FileReader();
+
+
+            reader.onload =
+                function(event) {
+
+                    let postcard =
+                        document.getElementById("postcard");
+
+
+                    postcard.style.backgroundImage =
+                        "url('" +
+                        event.target.result +
+                        "')";
+
+
+                    postcard.style.backgroundSize =
+                        "cover";
+
+
+                    postcard.style.backgroundPosition =
+                        "center";
+
+
+                    postcard.style.backgroundRepeat =
+                        "no-repeat";
+
+                };
+
+
+            reader.readAsDataURL(file);
+
+        }
+
+
+        /* ========================================
+           ВЕРНУТЬ ШАБЛОН
+        ======================================== */
+
+        function removePhoto() {
+
+            let postcard =
+                document.getElementById("postcard");
+
+
+            let templates = {
+
+                birthday:
+                    "https://www.publicdomainpictures.net/pictures/320000/velka/floral-birthday-card-greeting.jpg",
+
+                love:
+                    "https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&w=1200&q=80",
+
+                newyear:
+                    "https://images.unsplash.com/photo-1482517967863-00e15c9b44be?auto=format&fit=crop&w=1200&q=80",
+
+                march8:
+                    "https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1200&q=80",
+
+                wedding:
+                    "https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1200&q=80",
+
+                friend:
+                    "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&q=80"
+
+            };
+
+
+            postcard.style.backgroundImage =
+                "url('" +
+                templates[currentTemplate] +
+                "')";
+
+
+            document.getElementById("photoInput")
+                .value = "";
+
+        }
+
+
+        /* ========================================
+           НАСТОЯЩЕЕ СКАЧИВАНИЕ ОТКРЫТКИ
+        ======================================== */
+
+        function downloadCard() {
+
+            let postcard =
+                document.getElementById("postcard");
+
+
+            html2canvas(postcard, {
+
+                useCORS: true,
+
+                allowTaint: false,
+
+                scale: 2,
+
+                backgroundColor: null
+
+            }).then(function(canvas) {
+
+
+                /* СОЗДАЁМ ССЫЛКУ */
+
+                let link =
+                    document.createElement("a");
+
+
+                /* НАЗВАНИЕ ФАЙЛА */
+
+                link.download =
+                    "my-postcard.png";
+
+
+                /* ПРЕВРАЩАЕМ CANVAS В PNG */
+
+                link.href =
+                    canvas.toDataURL("image/png");
+
+
+                /* АВТОМАТИЧЕСКИ СКАЧИВАЕМ */
+
+                link.click();
+
+
+            }).catch(function(error) {
+
+                console.error(error);
+
+
+                alert(
+                    "Не удалось скачать открытку. Попробуйте ещё раз."
+                );
+
+            });
+
+        }
+
+
+        /* ========================================
+           ЗАПУСК
+        ======================================== */
+
+        window.onload =
+            function() {
+
+                selectText("mainText");
+
+            };
+
+    </script>
+
+</body>
+
+</html>
+```
